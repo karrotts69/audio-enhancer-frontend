@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Audio Enhancer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Same CSS as before, omitted for brevity */
+        :root {
+            --primary: #6200ea;
+            --primary-light: #9d46ff;
+            --primary-dark: #0a00b6;
+            --secondary: #03dac6;
+            --background: #121212;
+            --surface: #1e1e1e;
+            --on-background: #e1e1e1;
+            --on-surface: #a7a7a7;
+            --error: #cf6679;
+            --success: #00c853;
+        }
+        /* ... rest of the CSS unchanged ... */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>AI Audio Enhancer</h1>
+            <p class="tagline">Transform your music with AI-powered drum and bass accompaniment</p>
+        </header>
+        
+        <main>
+            <div class="app-container">
+                <div class="card">
+                    <h2><i class="fas fa-upload"></i> Upload & Process</h2>
+                    <!-- Same HTML structure as before -->
+                    <div id="upload-area" class="upload-area">
+                        <i class="fas fa-music"></i>
+                        <p>Drag and drop your audio file here</p>
+                        <p>or</p>
+                        <button id="browse-btn" class="btn"><i class="fas fa-folder-open"></i> Browse Files</button>
+                        <input type="file" id="file-input" accept=".mp3,.wav">
+                        <p class="file-types">Supported formats: MP3, WAV</p>
+                    </div>
+                    <!-- ... rest of the upload/process section unchanged ... -->
+                </div>
+                
+                <div class="card">
+                    <h2><i class="fas fa-headphones"></i> Results & Analysis</h2>
+                    <!-- Same result/analysis structure -->
+                </div>
+            </div>
+        </main>
+        
+        <footer>
+            <p>&copy; 2025 AI Audio Enhancer. All rights reserved.</p>
+        </footer>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const uploadArea = document.getElementById('upload-area');
+            const browseBtn = document.getElementById('browse-btn');
+            const fileInput = document.getElementById('file-input');
+            const fileInfo = document.getElementById('file-info');
+            const fileName = document.getElementById('file-name');
+            const fileSize = document.getElementById('file-size');
+            const processBtn = document.getElementById('process-btn');
+            const progressContainer = document.getElementById('progress-container');
+            const progressFill = document.getElementById('progress-fill');
+            const progressStatus = document.getElementById('progress-status');
+            const resultContainer = document.getElementById('result-container');
+            const resultAudio = document.getElementById('result-audio');
+            const downloadBtn = document.getElementById('download-btn');
+            const errorMessage = document.getElementById('error-message');
+            const successMessage = document.getElementById('success-message');
+            const tempoValue = document.getElementById('tempo-value');
+            const keyValue = document.getElementById('key-value');
+
+            let selectedFile = null;
+            const API_ENDPOINT = 'https://your-backend.onrender.com/api/process'; // Replace with your backend URL
+
+            browseBtn.addEventListener('click', () => fileInput.click());
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.style.borderColor = 'var(--secondary)';
+                uploadArea.style.backgroundColor = 'rgba(157, 70, 255, 0.05)';
+            });
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.style.borderColor = 'var(--primary-light)';
+                uploadArea.style.backgroundColor = 'transparent';
+            });
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.style.borderColor = 'var(--primary-light)';
+                uploadArea.style.backgroundColor = 'transparent';
+                if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+            });
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files.length) handleFile(fileInput.files[0]);
+            });
+            processBtn.addEventListener('click', processAudio);
+            downloadBtn.addEventListener('click', () => {
+                const a = document.createElement('a');
+                a.href = resultAudio.src;
+                a.download = 'enhanced_' + selectedFile.name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                showSuccessMessage('Your enhanced audio has been downloaded successfully!');
+            });
+
+            function handleFile(file) {
+                if (!file.name.match(/\.(mp3|wav)$/i)) {
+                    showErrorMessage('Please upload an MP3 or WAV file');
+                    return;
+                }
+                selectedFile = file;
+                fileName.textContent = file.name;
+                fileSize.textContent = formatFileSize(file.size);
+                fileInfo.style.display = 'block';
+                processBtn.disabled = false;
+                hideErrorMessage();
+            }
+
+            function formatFileSize(bytes) {
+                if (bytes < 1024) return bytes + ' bytes';
+                else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+                else return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+            }
+
+            function processAudio() {
+                if (!selectedFile) return;
+
+                const drumStyle = document.getElementById('drum-style').value;
+                const bassStyle = document.getElementById('bass-style').value;
+                const drumIntensity = document.getElementById('drum-intensity').value;
+                const bassIntensity = document.getElementById('bass-intensity').value;
+
+                progressContainer.style.display = 'block';
+                processBtn.disabled = true;
+
+                const formData = new FormData();
+                formData.append('file', selectedFile);
+                formData.append('drumStyle', drumStyle);
+                formData.append('bassStyle', bassStyle);
+                formData.append('drumIntensity', drumIntensity);
+                formData.append('bassIntensity', bassIntensity);
+
+                uploadFile(formData);
+            }
+
+            function uploadFile(formData) {
+                updateProgress(5);
+                progressStatus.textContent = 'Uploading file...';
+
+                fetch(API_ENDPOINT, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => { throw new Error(err.error); });
+                    }
+                    const tempo = response.headers.get('X-Tempo');
+                    const key = response.headers.get('X-Key');
+                    return response.blob().then(blob => ({ blob, tempo, key }));
+                })
+                .then(({ blob, tempo, key }) => {
+                    updateProgress(100);
+                    progressStatus.textContent = 'Processing complete!';
+                    const url = URL.createObjectURL(blob);
+                    resultAudio.src = url;
+                    resultContainer.style.display = 'block';
+                    tempoValue.textContent = `${parseFloat(tempo).toFixed(0)} BPM`;
+                    keyValue.textContent = key;
+                    showSuccessMessage('Your audio has been successfully processed!');
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showErrorMessage(error.message);
+                    progressContainer.style.display = 'none';
+                    processBtn.disabled = false;
+                });
+            }
+
+            function updateProgress(percentage) {
+                const roundedPercentage = Math.round(percentage);
+                progressFill.style.width = roundedPercentage + '%';
+                progressStatus.textContent = `Processing... (${roundedPercentage}%)`;
+            }
+
+            function showErrorMessage(message) {
+                errorMessage.textContent = message;
+                errorMessage.style.display = 'block';
+                successMessage.style.display = 'none';
+            }
+
+            function hideErrorMessage() {
+                errorMessage.style.display = 'none';
+            }
+
+            function showSuccessMessage(message) {
+                successMessage.textContent = message;
+                successMessage.style.display = 'block';
+                errorMessage.style.display = 'none';
+                setTimeout(() => successMessage.style.display = 'none', 5000);
+            }
+
+            function initialize() {
+                processBtn.disabled = true;
+                fileInfo.style.display = 'none';
+                progressContainer.style.display = 'none';
+                resultContainer.style.display = 'none';
+                errorMessage.style.display = 'none';
+                successMessage.style.display = 'none';
+            }
+
+            initialize();
+        });
+    </script>
+</body>
+</html>
