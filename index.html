@@ -6,7 +6,6 @@
     <title>AI Audio Enhancer</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Same CSS as before, omitted for brevity */
         :root {
             --primary: #6200ea;
             --primary-light: #9d46ff;
@@ -19,7 +18,173 @@
             --error: #cf6679;
             --success: #00c853;
         }
-        /* ... rest of the CSS unchanged ... */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: var(--background);
+            color: var(--on-background);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            padding: 20px;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        h1 {
+            color: var(--primary);
+            margin: 0;
+            font-size: 2.5em;
+        }
+        .tagline {
+            color: var(--on-surface);
+            font-size: 1.2em;
+        }
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .card {
+            background-color: var(--surface);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        h2 {
+            color: var(--primary-light);
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .upload-area {
+            border: 2px dashed var(--primary-light);
+            padding: 40px;
+            text-align: center;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .upload-area:hover {
+            border-color: var(--secondary);
+            background-color: rgba(157, 70, 255, 0.05);
+        }
+        .upload-area i {
+            font-size: 2em;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        .upload-area p {
+            margin: 10px 0;
+            color: var(--on-surface);
+        }
+        .file-types {
+            font-size: 0.9em;
+            color: var(--on-surface);
+        }
+        #file-input {
+            display: none;
+        }
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn:hover {
+            background-color: var(--primary-light);
+        }
+        .btn:disabled {
+            background-color: var(--on-surface);
+            cursor: not-allowed;
+        }
+        .file-info {
+            margin-top: 20px;
+            display: none;
+        }
+        .file-info p {
+            margin: 5px 0;
+        }
+        .controls {
+            margin: 20px 0;
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 10px;
+            align-items: center;
+        }
+        label {
+            color: var(--on-background);
+        }
+        select, input[type="range"] {
+            width: 100%;
+            padding: 5px;
+            border-radius: 4px;
+            background-color: var(--background);
+            color: var(--on-background);
+            border: 1px solid var(--primary-light);
+        }
+        .progress-container {
+            display: none;
+            margin-top: 20px;
+            position: relative;
+            background-color: var(--background);
+            border-radius: 4px;
+            height: 20px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: var(--secondary);
+            width: 0;
+            transition: width 0.3s ease;
+        }
+        #progress-status {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--on-background);
+            font-size: 0.9em;
+        }
+        .result-container {
+            display: none;
+            margin-top: 20px;
+        }
+        #result-audio {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .analysis p {
+            margin: 5px 0;
+        }
+        #error-message {
+            color: var(--error);
+            margin-top: 10px;
+            display: none;
+        }
+        #success-message {
+            color: var(--success);
+            margin-top: 10px;
+            display: none;
+        }
+        footer {
+            text-align: center;
+            margin-top: 40px;
+            color: var(--on-surface);
+            font-size: 0.9em;
+        }
     </style>
 </head>
 <body>
@@ -33,7 +198,6 @@
             <div class="app-container">
                 <div class="card">
                     <h2><i class="fas fa-upload"></i> Upload & Process</h2>
-                    <!-- Same HTML structure as before -->
                     <div id="upload-area" class="upload-area">
                         <i class="fas fa-music"></i>
                         <p>Drag and drop your audio file here</p>
@@ -42,18 +206,51 @@
                         <input type="file" id="file-input" accept=".mp3,.wav">
                         <p class="file-types">Supported formats: MP3, WAV</p>
                     </div>
-                    <!-- ... rest of the upload/process section unchanged ... -->
+                    <div id="file-info" class="file-info">
+                        <p><strong>File:</strong> <span id="file-name"></span></p>
+                        <p><strong>Size:</strong> <span id="file-size"></span></p>
+                    </div>
+                    <div class="controls">
+                        <label for="drum-style">Drum Style:</label>
+                        <select id="drum-style">
+                            <option value="rock">Rock</option>
+                            <!-- Add more styles if backend supports -->
+                        </select>
+                        <label for="drum-intensity">Drum Intensity:</label>
+                        <input type="range" id="drum-intensity" min="0" max="100" value="50">
+                        <label for="bass-style">Bass Style:</label>
+                        <select id="bass-style">
+                            <option value="fingered">Fingered</option>
+                            <!-- Add more styles if backend supports -->
+                        </select>
+                        <label for="bass-intensity">Bass Intensity:</label>
+                        <input type="range" id="bass-intensity" min="0" max="100" value="50">
+                    </div>
+                    <button id="process-btn" class="btn" disabled>Process Audio</button>
+                    <div id="progress-container" class="progress-container">
+                        <div id="progress-fill" class="progress-fill"></div>
+                        <span id="progress-status">Processing...</span>
+                    </div>
+                    <div id="error-message"></div>
+                    <div id="success-message"></div>
                 </div>
                 
                 <div class="card">
                     <h2><i class="fas fa-headphones"></i> Results & Analysis</h2>
-                    <!-- Same result/analysis structure -->
+                    <div id="result-container" class="result-container">
+                        <audio id="result-audio" controls></audio>
+                        <button id="download-btn" class="btn"><i class="fas fa-download"></i> Download</button>
+                        <div class="analysis">
+                            <p><strong>Tempo:</strong> <span id="tempo-value"></span></p>
+                            <p><strong>Key:</strong> <span id="key-value"></span></p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
         
         <footer>
-            <p>&copy; 2025 AI Audio Enhancer. All rights reserved.</p>
+            <p>© 2025 AI Audio Enhancer. All rights reserved.</p>
         </footer>
     </div>
     
